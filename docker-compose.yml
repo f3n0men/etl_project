@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # MinIO - S3-совместимое хранилище
+  minio:
+    image: minio/minio:latest
+    container_name: etl-minio
+    ports:
+      - "9000:9000"      # API порт
+      - "9001:9001"      # Web UI порт
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - etl-network
+
+  # ETL приложение
+  etl-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: etl-application
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      # Настройки MinIO
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: etl-data
+      # Режим работы (local для тестирования без S3, s3 для работы с MinIO)
+      RUN_MODE: s3
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - etl-network
+    # Команда запуска (можно переопределить)
+    command: python src/main.py
+
+volumes:
+  minio_data:
+    driver: local
+
+networks:
+  etl-network:
+    driver: bridge

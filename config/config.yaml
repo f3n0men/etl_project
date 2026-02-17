@@ -1,0 +1,42 @@
+# MinIO/S3 настройки
+s3:
+  endpoint: "http://minio:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "etl-data"
+  
+  paths:
+    input: "input/"
+    output: "output/"
+
+data_generator:
+  num_stores: 10
+  num_users: 10000
+  num_orders: 20000
+  
+  cities:
+    - "Москва"
+    - "Санкт-Петербург"
+    - "Магнитогорск"
+    - "Рыбинск"
+    - "Казань"
+  
+  users_2025_ratio: 0.75
+
+etl:
+
+  target_year: 2025
+  
+  top_n: 3
+  
+  local_paths:
+    input_dir: "./data/input"
+    output_dir: "./data/output"
+    log_dir: "./logs"
+
+# Логирование
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  save_metrics: true
